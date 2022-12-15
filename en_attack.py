@@ -7,8 +7,10 @@
 ## contained in the LICENCE file in this directory.
 
 import sys
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import numpy as np
+
+tf.disable_v2_behavior()
 
 BINARY_SEARCH_STEPS = 9  # number of times to adjust the constant with binary search
 MAX_ITERATIONS = 10000   # number of iterations to perform gradient descent
@@ -134,6 +136,7 @@ class EADEN:
         self.init = tf.variables_initializer(var_list=[self.global_step]+[self.slack]+[self.newimg]+new_vars)
 
     def attack(self, imgs, targets):
+        # N = 2
         """
         Perform the EAD attack on the given images for the given targets.
 
@@ -143,6 +146,8 @@ class EADEN:
         r = []
         print('go up to',len(imgs))
         for i in range(0,len(imgs),self.batch_size):
+        # print(f'attach {N} images')
+        # for i in range(0, N, self.batch_size):
             print('tick',i)
             r.extend(self.attack_batch(imgs[i:i+self.batch_size], targets[i:i+self.batch_size]))
         return np.array(r)

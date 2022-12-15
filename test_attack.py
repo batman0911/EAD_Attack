@@ -6,13 +6,15 @@
 ## This program is licenced under the BSD 2-Clause licence,
 ## contained in the LICENCE file in this directory.
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import numpy as np
 import time
 import random
 import _pickle as pickle
 import os
 import scipy
+
+tf.disable_v2_behavior()
 
 from setup_cifar import CIFAR, CIFARModel
 from setup_mnist import MNIST, MNISTModel
@@ -105,7 +107,7 @@ def generate_data(data, model, samples, targeted=True, target_num=9, start=0, in
 	return inputs, targets, labels, true_ids
 
 def main(args):
-	with tf.Session() as sess:
+	with tf.compat.v1.Session() as sess:
 		if (args['dataset'] == 'mnist'):
 			data =  MNIST()
 			inception=False
