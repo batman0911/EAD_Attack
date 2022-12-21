@@ -6,3 +6,5 @@ models
 cifar-10-batches-bin
 __pycache__
 mnist_EN.npy
+imagenetdata
+.tmp*

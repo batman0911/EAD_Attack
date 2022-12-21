@@ -10,9 +10,11 @@
 ## contained in the LICENCE file in this directory.
 
 import sys
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import numpy as np
 from six.moves import xrange
+
+tf.disable_v2_behavior()
 
 class FGM:
     def __init__(self, sess, model, batch_size=9, ord=np.inf, eps=0., clip_min=-0.5, clip_max=0.5, targeted=True, inception=False):

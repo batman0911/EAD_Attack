@@ -46,10 +46,14 @@ import sys
 import random
 import tarfile
 import scipy.misc
+import cv2
+from PIL import Image
 
 import numpy as np
 from six.moves import urllib
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+
+tf.disable_v2_behavior()
 
 # pylint: disable=line-too-long
 DATA_URL = 'http://jaina.cs.ucdavis.edu/datasets/adv/imagenet/inception_v3_2016_08_28_frozen.tar.gz'
@@ -143,7 +147,9 @@ def run_inference_on_image(image):
             input_map={'DecodeJpeg:0': tf.reshape(img,((299,299,3)))},
             return_elements=['softmax/logits:0'])
 
-    dat = scipy.misc.imresize(scipy.misc.imread(image),(299,299))
+    # dat = scipy.misc.imresize(scipy.misc.imread(image),(299,299))
+    # dat = cv2.imresize(cv2.imread(image),(299,299))
+    dat = Image.open(image).resize(size=(299,299))
     predictions = sess.run(softmax_tensor,
                            {img: dat})
 
@@ -180,7 +186,7 @@ class InceptionModelPrediction:
     predictions = self.sess.run(self.softmax_tensor,
                          {self.img: scaled})
     predictions = np.squeeze(predictions)
-    return predictions
+    # return predictions
     # Creates node ID --> English string lookup.
     node_lookup = NodeLookup()
     top_k = predictions.argsort()#[-FLAGS.num_top_predictions:][::-1]
@@ -249,13 +255,14 @@ def maybe_download_and_extract():
 
 
 def main(_):
-  maybe_download_and_extract()
+  # maybe_download_and_extract()
   image = (FLAGS.image_file if FLAGS.image_file else
            os.path.join(FLAGS.model_dir, 'cropped_panda.jpg'))
   # run_inference_on_image(image)
   create_graph()
   with tf.Session() as sess:
-    dat = np.array(scipy.misc.imresize(scipy.misc.imread(image),(299,299)), dtype = np.float32)
+    # dat = np.array(scipy.misc.imresize(scipy.misc.imread(image),(299,299)), dtype = np.float32)
+    dat = np.array(Image.open(image).resize(size=(299,299)), dtype=np.float32)
     dat /= 255.0
     dat -= 0.5
     # print(dat)
@@ -270,31 +277,64 @@ def main(_):
       score = predictions[node_id]
       print('%s (score = %.5f)' % (human_string, score))
 
+def load_label():
+    label_dict = dict()
+    f = open('imagenetdata/labels/label.txt', 'r')
+    while True:
+      line = f.readline()
+      if not line:
+        break
+      # print(line)
+      arr = line.split(" ")
+      n = len(arr[1])
+      val = arr[1][0:n-2]
+      if not val or val is None:
+        continue
+      # print(arr[0], val, type(val))
+      label_dict[arr[0]] = arr[1][0:n-2]
+
+    f.close()
+
+    print(f'num label: {len(label_dict)}')
+    return label_dict
+
+label_dict = load_label()
 
 def readimg(ff):
-  f = "../imagenetdata/imgs/"+ff
-  img = scipy.misc.imread(f)
+  f = "imagenetdata/imgs/"+ff
+  print(ff)
+  # img = scipy.misc.imread(f)
+  # img = cv2.imread(f)
+  img = Image.open(f)
+  img_arr = np.array(Image.open(f),dtype=np.float32)
   # skip small images (image should be at least 299x299)
-  if img.shape[0] < 299 or img.shape[1] < 299:
+  if img_arr.shape[0] < 299 or img_arr.shape[1] < 299:
     return None
-  img = np.array(scipy.misc.imresize(img,(299,299)),dtype=np.float32)/255-.5
+  img = np.array(img.resize(size=(299,299)),dtype=np.float32)/255-.5
+  # print('image shape', img)
   if img.shape != (299, 299, 3):
     return None
-  return [img, int(ff.split(".")[0])]
+  # return [img, int(ff.split(".")[0])]
+  return [img, int(str(label_dict.get(ff.split(".")[0])))]
+
+
 
 class ImageNet:
   def __init__(self, seed, num_samples = 2000):
+    
     from multiprocessing import Pool
     pool = Pool(8)
-    file_list = sorted(os.listdir("../imagenetdata/imgs/"))
+    file_list = sorted(os.listdir("imagenetdata/imgs/"))
     random.seed(seed)
     r = pool.map(readimg, file_list[:num_samples])
     random.shuffle(file_list)
     #print(file_list[:200])
     r = [x for x in r if x != None]
     test_data, test_labels = zip(*r)
+    print(f'len of test labels: {len(test_labels)}, test data: {len(test_data)}')
     self.test_data = np.array(test_data)
     self.test_labels = np.zeros((len(test_labels), 1001))
+    print(self.test_labels, self.test_labels.shape)
     self.test_labels[np.arange(len(test_labels)), test_labels] = 1
 
   
