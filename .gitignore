@@ -9,3 +9,5 @@ mnist_EN.npy
 imagenetdata
 .tmp*
 *.npy
+.idea 
+.vscode

@@ -208,7 +208,7 @@ class InceptionModel:
     self.sess = sess
     self.use_logits = use_logits
     if not CREATED_GRAPH:
-      create_graph()
+      # create_graph()
       CREATED_GRAPH = True
     self.model = InceptionModelPrediction(sess, use_logits)
 
@@ -331,11 +331,13 @@ class ImageNet:
     #print(file_list[:200])
     r = [x for x in r if x != None]
     test_data, test_labels = zip(*r)
+    print(f'test labels: {test_labels}')
     print(f'len of test labels: {len(test_labels)}, test data: {len(test_data)}')
     self.test_data = np.array(test_data)
     self.test_labels = np.zeros((len(test_labels), 1001))
-    print(self.test_labels, self.test_labels.shape)
-    self.test_labels[np.arange(len(test_labels)), test_labels] = 1
+    # print(self.test_labels, self.test_labels.shape)
+    print(f'test labels info: {self.test_labels}, {self.test_labels.shape}')
+    self.test_labels[np.arange(len(test_labels)), 0] = 1
 
   
 
